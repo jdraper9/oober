@@ -9,4 +9,92 @@
 
 require 'sqlite3'
 require 'faker'
-LOCATIONS = "abcdefghijklmnopqrstuvwxyz"
+LOCATIONS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('')
+
+# Create database
+db = SQLite3::Database.new("oober.db")
+
+# For testing, wipe tables each time. Comment out when done
+db.execute("DROP TABLE users")
+db.execute("DROP TABLE drivers")
+db.execute("DROP TABLE reviews")
+
+# Create table of users
+create_users_table = <<-SQL
+	CREATE TABLE IF NOT EXISTS users (
+		id INTEGER PRIMARY KEY,
+		name VARCHAR(255),
+		location VARCHAR(255)
+	)
+SQL
+
+db.execute(create_users_table)
+
+# Create table of drivers
+create_drivers_table = <<-SQL
+	CREATE TABLE IF NOT EXISTS drivers (
+		id INTEGER PRIMARY KEY,
+		name VARCHAR(255),
+		location VARCHAR(255)
+	)
+SQL
+
+db.execute(create_drivers_table)
+
+# Create table of reviews
+create_reviews_table = <<-SQL
+	CREATE TABLE IF NOT EXISTS reviews (
+		id INTEGER PRIMARY KEY,
+		stars INT,
+		price INT,
+		distance INT,
+		user_id INT,
+		driver_id INT,
+		FOREIGN KEY (user_id) REFERENCES users(id),
+		FOREIGN KEY (driver_id) REFERENCES drivers(id)
+	)
+SQL
+
+db.execute(create_reviews_table)
+
+# ----- 
+
+# Populate Users and Drivers with 5 examples. Random name and location
+
+def create_user(database, name, location)
+	database.execute("INSERT INTO users (name, location) VALUES (?, ?)", [name, location])
+end
+
+5.times do
+	create_user(db, Faker::Name.name, LOCATIONS.sample)
+end
+
+def create_driver(database, name, location)
+	database.execute("INSERT INTO drivers (name, location) VALUES (?, ?)", [name, location])
+end
+
+5.times do
+	create_driver(db, Faker::Name.name, LOCATIONS.sample)
+end
+
+# -----
+
+# Write method that takes two locations and finds shortest distance between them. Each letter is 5 miles apart
+
+def distance(location1, location2)
+	a = LOCATIONS.index(location1)
+	b = LOCATIONS.index(location2)
+
+	if (b - a).abs > 13
+		dist = 26 - (b - a).abs
+	elsif (b - a).abs < 13
+		dist = b - a
+	else
+		dist = 13
+	end
+	
+	dist * 5
+end
+
+
+
