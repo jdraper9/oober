@@ -56,6 +56,7 @@ create_reviews_table = <<-SQL
 SQL
 
 db.execute(create_reviews_table)
+db.results_as_hash = true
 
 # ----- 
 
@@ -88,13 +89,34 @@ def distance(location1, location2)
 	if (b - a).abs > 13
 		dist = 26 - (b - a).abs
 	elsif (b - a).abs < 13
-		dist = b - a
+		dist = (b - a).abs
 	else
 		dist = 13
 	end
-	
-	dist * 5
+
+	#dist * 5
 end
+
+# Write method that finds closest driver to user
+
+def closest_driver(database, user_id) # user id is array index of table
+	closest_distance = 999999
+	closest_driver_id = nil
+	current_location = database.execute("SELECT * FROM users")[user_id]["location"]
+	drivers_hash = database.execute("SELECT * FROM drivers")
+	drivers_hash.each do |driver|
+		driver_location = driver["location"]
+		if distance(current_location, driver_location) < closest_distance
+			closest_distance = distance(current_location, driver_location)
+			closest_driver_id = driver["id"]
+		end
+	end
+	closest_driver_id
+end
+
+
+
+
 
 
 
